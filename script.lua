@@ -32,7 +32,7 @@ end
 
 local wasCrouching = false
 function events.entity_init()
-  nameplate.All:setText("Gali${afk}")
+  nameplate.All:setText(toJson({"Gali", {text = "${afk}", color = "gray"}}))
   nameplate.CHAT:setText("Gali")
   nameplate.ENTITY:setVisible(false)
 
@@ -41,7 +41,7 @@ function events.entity_init()
     FakeName = fakeNameplate(models.gali.nameplate, "nameplate", vec(0,0,0), 0.4, "${badges}:axolotl: Gali")
     fakeNameplate(models.gali.nameplate, "afk",  vec(0, 3, 0), 0.3, toJson({ text = "${afk}", color = "#703aa6"}))
 
-    if host:isHost() then events.TICK:register(function ()
+    events.TICK:register(function ()
       if wasCrouching ~= player:isCrouching() and player:getVariable("fishText").message == nil then
         if player:isCrouching() then
           FakeName:setOpacity(0.5)
@@ -52,7 +52,7 @@ function events.entity_init()
         end
         wasCrouching = player:isCrouching()
       end
-    end) end
+    end)
   end
   ActiveNameplate = FakeName or nameplate.ENTITY 
 end
