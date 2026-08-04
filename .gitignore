@@ -1,0 +1,12 @@
+# https://github.com/GrandpaScout/OptiFigura
+optimize.bat
+optimize.sh
+# Files created while the optimizer is working.
+optimize.hlnk.ps1
+*.optivorbis.ogg
+# The optimizer's config.
+.opticonfig
+.opticonfig.bak
+# Backups of files optimized by the optimizer.
+*.png.bak
+*.ogg.bak
