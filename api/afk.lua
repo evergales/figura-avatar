@@ -1,0 +1,242 @@
+--[[
+____  ___ __   __
+| __|/ _ \\ \ / /
+| _|| (_) |> w <
+|_|  \___//_/ \_\
+FOX's AFK Nameplate v1.1.0
+
+Requires FOX's Custom Placeholders: https://github.com/Bitslayn/FOX-s-Figura-APIs/blob/main/Utilities/placeholders.lua
+--]]
+--#REGION ˚♡ Vars ♡˚
+
+--[[Time placeholder cheatsheet
+
+Seconds
+	0 - 59 : ${s}
+	00 - 59 : ${ss}
+	0 - inf : ${S}
+	00 - inf : ${SS}
+
+Minutes
+	0 - 59 : ${m}
+	00 - 59 : ${mm}
+	0 - inf : ${M}
+	00 - inf : ${MM}
+
+Hours
+	0 - 23 : ${h}
+	00 - 23 : ${hh}
+	0 - inf : ${H}
+	00 - inf : ${HH}
+]]
+
+---@class FOXAFK2
+local afk = {
+
+	------------------------------------------------------
+	-- HEY YOU! This is where you may change your configs!
+	-- This table is returned through the require, so this
+	-- can be modified externally which is best practice!
+	------------------------------------------------------
+
+	config = {
+		-- Amount of time in seconds the player must idle for in order to go AFK. Set this to math.huge to disable the AFK timer altogether.
+		timeUntilAFK = 300,
+
+		-- Recommended to use these with tab list and entity nameplates, and are applied with ${afk}
+		-- Short is applied when AFK for less than an hour, long is applied for longer AFK times
+
+		-- ${afk} text to display when the player ISN'T AFK
+		active = "",
+		-- ${afk} text to display when the player has been AFK for less than an hour
+		short = " :zzz: ${m}:${ss}",
+		-- ${afk} text to display when the player has been AFK for over an hour
+		long = " :zzz: ${H}:${mm}:${ss}",
+
+		-- Recommended for use with chat nameplate. Applied with ${afk_alt}
+
+		-- ${afk_alt} text to display when the player ISN'T AFK
+		altActive = "",
+		-- ${afk_alt} text to display when the player is AFK
+		alt = " [AFK]",
+
+		-- Auto AFK rules
+		rules = {
+			-- Whether the player should be forced into AFK if the game window goes unfocused
+			focusAutoAfk = false,
+			-- Whether the player should be forced out of AFK when the game window becomes focused
+			focusAutoUnafk = false,
+			-- Whether typing in chat forces the player out of AFK
+			chatAutoUnafk = true,
+		},
+	},
+
+	-- If the user is AFK. They're AFK if `afk.AFKTime` is greater than `afk.config.timeUntilAFK`
+	isAFK = false,
+	-- If the player is forced AFK. They can only be forced AFK by running `pings.afk()`
+	isForcedAFK = false,
+	-- The amount of seconds the player has been idle for
+	AFKTime = 0,
+}
+
+local cfg = afk.config
+local lastAction = client.getSystemTime()
+local forceAFK = false
+
+--#ENDREGION
+--#REGION ˚♡ Nameplate placeholder ♡˚
+
+-- All the functions required to format and update the placeholder
+
+local clamps = { s = 60, m = 60, h = 24 }
+
+---@param string string
+---@param timings table
+---@return string, integer
+local function timeFormat(string, timings)
+	---@param s string
+	return string:gsub("%${(%w+)}", function(s)
+		local modulo = s:byte() > 96
+		local key = s:sub(1, 1):lower()
+
+		local timing = timings[key]
+		if not timing then return end
+		local clamp = clamps[key]
+
+		if modulo then timing = timing % clamp end
+
+		return ("%0" .. #s .. "d"):format(timing)
+	end)
+end
+
+---@type FOXPlaceholders
+local placeholders = require("./placeholders")
+local function updatePlaceholder()
+	local ms = client.getSystemTime() - lastAction
+	local s = math.floor(ms / 1000)
+	local m = math.floor(s / 60)
+	local h = math.floor(m / 60)
+
+	local timings = { s = s, m = m, h = h }
+
+	afk.isAFK = s >= afk.config.timeUntilAFK or forceAFK
+	afk.isForcedAFK = forceAFK
+	afk.AFKTime = s
+
+	placeholders.afk = timeFormat(afk.isAFK and cfg[h < 1 and "short" or "long"] --[[@as string]] or cfg.active, timings)
+	placeholders.afk_alt = timeFormat(afk.isAFK and cfg.alt or cfg.altActive, timings)
+end
+
+--#ENDREGION
+--#REGION ˚♡ Ping handler ♡˚
+
+-- Ping function and repings
+
+local function afkFunc(time, forced)
+	if not (time or forced) then
+		forceAFK = true
+		return
+	end
+
+	lastAction = time and client.getSystemTime() - time or lastAction
+	forceAFK = forced
+end
+
+---Sets the AFK time in ms, and allows you to force AFK
+---
+---If no arguments are passed, the timer will not change and the player will be forced into AFK. This is the same as passing nil for the time and true for forced.
+---
+---If just the time is provided, if the player is forced into AFK, they will no longer be force AFKed
+---
+---Run `pings.afk(0)` to reset the AFK timer and disable forcing AFK
+---@param time number?
+---@param forced boolean?
+function pings.afk(time, forced)
+	afkFunc(time, forced)
+end
+
+if host:isHost() then
+	local repingTimer = 1
+	function events.tick()
+		repingTimer = repingTimer % 800 + 1 -- Reping every 40 seconds
+		if repingTimer > 1 then return end
+		if forceAFK then
+			pings.afk(client.getSystemTime() - lastAction, true)
+		else
+			pings.afk(client.getSystemTime() - lastAction)
+		end
+	end
+end
+
+--#ENDREGION
+--#REGION ˚♡ AFK checker ♡˚
+
+-- Checks if the player is idle
+
+---Function to run to get out of AFK when an action is made
+local function action()
+	if afk.isAFK then
+		if host:isHost() then
+			pings.afk(0)
+		else
+			afkFunc(0)
+		end
+	else
+		lastAction = client.getSystemTime()
+	end
+end
+
+-- Check movement actions
+
+function events.entity_init()
+	function events.key_press()
+		if host:isChatOpen() or host:getScreen() or action_wheel:isEnabled() then return end
+		if player:getVelocity():lengthSquared() < 0.01 then return end
+		action()
+	end
+end
+
+-- Check camera turn actions
+
+local lastTilt
+local function checkAction()
+	local tilt = player:getRot().x
+	if lastTilt == tilt then return end
+
+	lastTilt = tilt
+	action()
+end
+
+--#ENDREGION
+--#REGION ˚♡ AFK ticker ♡˚
+
+-- Main function to run other functions while the player is unloaded. Runs every 1/4 seconds
+
+local lastTick
+local function run()
+	local thisTick = math.floor(world.getTime() / 5)
+	if lastTick == thisTick then return end
+	lastTick = thisTick
+
+	if player:isLoaded() then checkAction() end
+	updatePlaceholder()
+
+	if not host:isHost() then return end
+	
+	local rules = afk.config.rules
+	if rules.focusAutoAfk and not (client.isWindowFocused() or afk.isAFK) then
+		pings.afk()
+	elseif rules.focusAutoUnafk and client.isWindowFocused() and afk.isAFK then
+		pings.afk(0)
+	elseif rules.chatAutoUnafk and client.isWindowFocused() and host:isChatOpen() and host:getChatText() ~= "" and afk.isAFK then
+		pings.afk(0)
+	end
+end
+
+models:newPart("afk", "Portrait").midRender = run
+events.tick = run
+events.on_play_sound = function() pcall(run) end
+
+--#ENDREGION
+
+return afk
