@@ -1,6 +1,7 @@
 local Util = require("util")
 local localchatUI = require("localchatUI")
-local fishText    = require("fishTextAssets.fishText")
+local fishText = require("fishTextAssets.fishText")
+local axoplate = require("api.axoplate")
 
 require("api.GSAnimBlend")
 local SwingingPhysics = require("api.swinging_physics")
@@ -15,6 +16,18 @@ vanilla_model.PLAYER:setVisible(false)
 vanilla_model.ARMOR:setVisible(false)
 vanilla_model.HELMET_ITEM:setVisible(true)
 models.assets:setVisible(false)
+
+-- nameplate
+axoplate:new(models.gali.root, "nameplate", "${badges}:axolotl: Gali")
+axoplate:new(models.gali.root, "afkPlate", toJson({ text = "${afk}", color = "#703aa6"}), nil, vec(0, 3, 0), 0.3)
+
+events.ENTITY_INIT:register(function ()
+  nameplate.All:setText(toJson({"Gali", {text = "${afk}", color = "gray"}}))
+  nameplate.CHAT:setText("Gali")
+
+  -- this has to be under entity init because the reference can only be accessed after entity init
+  ActiveNameplate = axoplate.enoughPerms and axoplate.plates.nameplate.ref or nameplate.ENTITY
+end)
 
 -- eyes
 squapi.eye:new(models.gali.root.Torso.Head.Eyes.Irises.LeftIris, 0.2, 1.0, 0.0, 0.0)
