@@ -16,12 +16,12 @@ local function fakeNameplate(root, name, offset, scale, text)
   
 local wasCrouching = false
 local nameplateOffset = 0
+local permLevel = avatar:getPermissionLevel()
 function events.entity_init()
   nameplate.All:setText(toJson({"Gali", {text = "${afk}", color = "gray"}}))
   nameplate.CHAT:setText("Gali")
   nameplate.ENTITY:setVisible(false)
 
-  local permLevel = avatar:getPermissionLevel()
   if permLevel == "HIGH" or permLevel == "MAX" then
     nameplateOffset = (1 - Util.getAttribute("minecraft:generic.scale")) * 10
     FakeName = fakeNameplate(models.gali.root.nameplate, "nameplate", vec(0,nameplateOffset, 0), 0.4, "${badges}:axolotl: Gali")
@@ -45,7 +45,9 @@ end
 
 function pings.updateNameplateOffset(offset) 
     nameplateOffset = offset
-    FakeName:setPos(vec(0, nameplateOffset, 0))
+    if permLevel == "HIGH" or permLevel == "MAX" then
+      FakeName:setPos(vec(0, nameplateOffset, 0))
+    end
 end
 if host:isHost() then events.TICK:register(function ()
     if world.getTime() % 10 ~= 0 then return end
