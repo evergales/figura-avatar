@@ -119,4 +119,7 @@ events.ENTITY_INIT:register(function()
     events.TICK:register(nextTick)
 end)
 
+-- clear tracked chatter list when resource reload
+if host:isHost() then events.RESOURCE_RELOAD:register(function () trackedChatters = {} end) end
+
 return localchatUI
