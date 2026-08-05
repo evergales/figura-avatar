@@ -108,18 +108,15 @@ end) end
 
 -- wait 1 tick for the nameplate to be loaded because of entity init registration order T-T
 -- and store synced variables
-events.ENTITY_INIT:register(function()
-    local function nextTick()
-        avatar:store("localchatUI.version", version)
-        avatar:store("localchatUI.name", nameplate.CHAT:getText() or player:getName())
-        avatar:store("localchatUI.isLocalChatting", defaultLocalchatEnabled)
-
-        events.TICK:remove(nextTick)
-    end
-    events.TICK:register(nextTick)
-end)
+local function exportVariables()
+    avatar:store("localchatUI.version", version)
+    avatar:store("localchatUI.name", nameplate.CHAT:getText() or player:getName())
+    avatar:store("localchatUI.isLocalChatting", defaultLocalchatEnabled)
+    events.TICK:remove(exportVariables)
+end
+events.TICK:register(exportVariables)
 
 -- clear tracked chatter list when resource reload
-if host:isHost() then events.RESOURCE_RELOAD:register(function () trackedChatters = {} end) end
+if host:isHost() then events.RESOURCE_RELOAD:register(function () trackedChatters = {}; exportVariables() end) end
 
 return localchatUI
