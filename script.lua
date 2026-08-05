@@ -8,6 +8,7 @@ local patpat = require("api.patpat")
 local squapi = require("api.SquAPI")
 local placeholders = require("api.placeholders")
 local swingOnHead = SwingingPhysics.swingOnHead
+avatar:color(vec(0.72, 0.12, 0.3)) -- #B8204E
 
 --hide models
 vanilla_model.PLAYER:setVisible(false)
