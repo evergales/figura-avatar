@@ -63,7 +63,7 @@ local afk = {
 		-- Auto AFK rules
 		rules = {
 			-- Whether the player should be forced into AFK if the game window goes unfocused
-			focusAutoAfk = false,
+			focusAutoAfk = true,
 			-- Whether the player should be forced out of AFK when the game window becomes focused
 			focusAutoUnafk = false,
 			-- Whether typing in chat forces the player out of AFK

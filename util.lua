@@ -17,6 +17,16 @@ function Util.ParticleCircle(radius, count, particle)
     end
 end
 
+function Util.getAttribute(attribute_name)
+    local attrs = player:getNbt().attributes or {}
+    for _, attr in ipairs(attrs) do
+        if attr.id == attribute_name then
+            return attr.base
+        end
+    end
+    return 1 -- default
+end
+
 return Util
 
 

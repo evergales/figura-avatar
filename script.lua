@@ -15,48 +15,6 @@ vanilla_model.ARMOR:setVisible(false)
 vanilla_model.HELMET_ITEM:setVisible(true)
 models.assets:setVisible(false)
 
--- nameplate
-FakeName = nil
-local function fakeNameplate(root, name, offset, scale, text)
-    local task = root:newText(name)
-    root:setParentType("CAMERA")
-    task:setPos(offset)
-    task:setText(text)
-    task:setScale(scale)
-    task:setAlignment("CENTER")
-    task:setShadow(true)
-    -- task:setOutline(true)
-    -- task:setBackgroundColor(vec(0.3, 0.3, 0.3))
-    return task
-end
-
-local wasCrouching = false
-function events.entity_init()
-  nameplate.All:setText(toJson({"Gali", {text = "${afk}", color = "gray"}}))
-  nameplate.CHAT:setText("Gali")
-  nameplate.ENTITY:setVisible(false)
-
-  local permLevel = avatar:getPermissionLevel()
-  if permLevel == "HIGH" or permLevel == "MAX" then
-    FakeName = fakeNameplate(models.gali.nameplate, "nameplate", vec(0,0,0), 0.4, "${badges}:axolotl: Gali")
-    fakeNameplate(models.gali.nameplate, "afk",  vec(0, 3, 0), 0.3, toJson({ text = "${afk}", color = "#703aa6"}))
-
-    events.TICK:register(function ()
-      if wasCrouching ~= player:isCrouching() and player:getVariable("fishText").message == nil then
-        if player:isCrouching() then
-          FakeName:setOpacity(0.5)
-          FakeName:setPos(vec(0, -5, 0))
-        else
-          FakeName:setOpacity(1.0)
-          FakeName:setPos(vec(0, 0, 0))
-        end
-        wasCrouching = player:isCrouching()
-      end
-    end)
-  end
-  ActiveNameplate = FakeName or nameplate.ENTITY 
-end
-
 -- eyes
 squapi.eye:new(models.gali.root.Torso.Head.Eyes.Irises.LeftIris, 0.2, 1.0, 0.0, 0.0)
 squapi.eye:new(models.gali.root.Torso.Head.Eyes.Irises.RightIris, 1.0, 0.2, 0.0, 0.0)
@@ -143,7 +101,6 @@ table.insert(patpat.onUnpat, function() -- if you dont specify if event is for p
   animations.gali.patted:stop()
   models.gali.root.Torso.Head.Face:setUVPixels(0, 0) -- unset the blushy face
 end)
-
 
 -- stupidass create wonky cam fix
 if host:isHost() then
