@@ -65,7 +65,7 @@ local function updateTrackedChatters()
     end -- dont even
 
     -- Remove chatters only after a 5‑second timeout of not being nearby
-    local timeout = 5 * 20  -- 3 seconds
+    local timeout = 5 * 20  -- 5 seconds
     for uuid, data in pairs(trackedChatters) do
         if not nearby[uuid] and (now - data.lastSeen) > timeout then
             trackedChatters[uuid] = nil
