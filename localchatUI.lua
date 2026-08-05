@@ -28,18 +28,20 @@ local function updateTrackedChatters()
     local now = world.getTime()
     local nearby = {}
 
-    for _, p in pairs(world.getPlayers()) do
+    -- scan nearby players
+    for _, p in pairs(world.getPlayers()) do -- world.getPlayers() is indexed by player name, we'll index by uuid instead
         local distance = (player:getPos() - p:getPos()):length()
         if distance <= trackingDistance then
             local uuid = p:getUUID()
             nearby[uuid] = true
 
-            -- If already tracked, just refresh the player reference and timestamp
+            -- if already tracked, just refresh the player reference and timestamp
+            -- player reference is refreshed as a failsafe to not get stale playerdata later on
             if trackedChatters[uuid] then
                 trackedChatters[uuid].player = p
                 trackedChatters[uuid].lastSeen = now
             else
-                -- New potential chatter: check fishText existence
+                -- new potential chatter: check fishText existence
                 local fishText = p:getVariable("fishText")
                 if fishText and (uuid ~= player:getUUID() or showSelf) then
                     trackedChatters[uuid] = {
@@ -48,7 +50,8 @@ local function updateTrackedChatters()
                         lastSeen = now
                     }
 
-                    -- Version check (only shown once per session)
+                    -- version check against other players to alert if a new version is available
+                    -- only shown once per session
                     if not newVersionWarningShown then
                         local theirVersion = p:getVariable("localchatUI.version")
                         if theirVersion and version < theirVersion then
@@ -64,8 +67,8 @@ local function updateTrackedChatters()
         end
     end -- dont even
 
-    -- Remove chatters only after a 5‑second timeout of not being nearby
-    local timeout = 5 * 20  -- 5 seconds
+    -- remove chatters if they leave range or disappear after a 5 second grace period
+    local timeout = 5 * 20  -- 5 seconds in ticks
     for uuid, data in pairs(trackedChatters) do
         if not nearby[uuid] and (now - data.lastSeen) > timeout then
             trackedChatters[uuid] = nil
@@ -77,17 +80,17 @@ local function tickLocalchat()
     if world.getTime() % math.floor(20 / ticksPerSecond) ~= 0 then return end
 
     for _, data in pairs(trackedChatters) do
-        -- The player reference is kept fresh by updateTrackedChatters
         local p = data.player
         local fishText = p:getVariable("fishText")
         local newMessage = fishText and fishText.message
-        if newMessage and data.lastMessage ~= newMessage then
+        if newMessage and data.lastMessage ~= newMessage then -- check if the player has sent a new message since our stored one
             data.lastMessage = newMessage
             local playerName = p:getVariable("localchatUI.name")
             local isLocalChatting = p:getVariable("localchatUI.isLocalChatting")
             local formattedName = playerName or string.format('{ text = %s, color = "gray"}', p:getName())
 
             if isLocalChatting or (isLocalChatting == nil and not ignoreNonScriptUsers) then
+                -- printJson is only visible to the host unless another player has logging for non-host enabled
                 printJson(
                     toJson({ text = "[", color = "gray" }),
                     formattedName,
@@ -105,7 +108,7 @@ if host:isHost() then events.TICK:register(function()
 end) end
 
 -- wait 1 tick for the nameplate to be loaded because of entity init registration order T-T
--- and store the player's custom nameplate as their name
+-- and store synced variables
 if host:isHost() then events.ENTITY_INIT:register(function()
     local function nextTick()
         avatar:store("localchatUI.version", version)
