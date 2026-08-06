@@ -25,8 +25,7 @@ local function getAttribute(attribute_name)
     return 1 -- default
 end
 
-local permLevel = avatar:getPermissionLevel()
-axoPlate.enoughPerms = permLevel == "HIGH" or permLevel == "MAX"
+axoPlate.enoughPerms = avatar:canEditNameplate()
   
 ---@param root ModelPart The modelpart to attach your nameplate to, ex: models.model.root
 ---@param name string The identifying name of your nameplate, this is to make sure you can have multiple ex: "nameplate"
