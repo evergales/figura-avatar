@@ -123,6 +123,11 @@ end
 events.TICK:register(exportVariables)
 
 -- clear tracked chatter list when resource reload
-if host:isHost() then events.RESOURCE_RELOAD:register(function () trackedChatters = {}; exportVariables() end) end
+if host:isHost() then events.RESOURCE_RELOAD:register(function ()
+    for chatter in pairs (trackedChatters) do
+        trackedChatters[chatter] = nil
+    end
+    exportVariables() 
+end) end
 
 return localchatUI
