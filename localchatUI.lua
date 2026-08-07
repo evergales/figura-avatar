@@ -14,6 +14,7 @@ local showSelf = true -- show your own messages in the localchat history
 local ticksPerSecond = 10 -- how often your client will check for new messages
 local trackingUpdatesPerSecond = 2 -- how often your client will update the list of players who are tracked in your localchat
 local trackingDistance = 50 -- how far away players can be while you still see their localchat messsages (note: players outside your render distance wont show no matter what)
+local showBadges = true -- Whether to show people's badges in chat
 
 -- run this function under where you toggle your localchat
 -- if you dont do this, you will always show up in chat for other people regardless of if localchat is enabled for you
@@ -87,12 +88,16 @@ local function tickLocalchat()
             data.lastMessage = newMessage
             local playerName = p:getVariable("localchatUI.name")
             local isLocalChatting = p:getVariable("localchatUI.isLocalChatting")
+            local badge = p:getVariable("localchatUI.badge")
+
             local formattedName = playerName or string.format('{ text = %s, color = "gray"}', p:getName())
+            local formattedBadge = badge and toJson({ text = badge, font = "figura:badges" }) or nil
             if isLocalChatting or (isLocalChatting == nil and not ignoreNonScriptUsers) then
                 -- printJson is only visible to the host unless another player has logging for non-host enabled
                 printJson(
                     toJson({ text = "[", color = "gray" }),
                     formattedName,
+                    (showBadges and formattedBadge ~= nil) and formattedBadge or "",
                     toJson({ text = "] "..newMessage, color = "gray"})
                 )
             end
@@ -111,6 +116,7 @@ end) end
 local function exportVariables()
     avatar:store("localchatUI.version", version)
     avatar:store("localchatUI.name", nameplate.CHAT:getText() or player:getName())
+    avatar:store("localchatUI.badge", avatar:getBadges())
     avatar:store("localchatUI.isLocalChatting", defaultLocalchatEnabled)
     events.TICK:remove(exportVariables)
 end
