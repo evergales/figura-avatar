@@ -4,7 +4,7 @@
 
 -- INTERNAL VARIABLES, DO NOT TOUCH
 local localchatUI = {}
-local version = "1.2"
+local version = "1.3"
 local newVersionWarningShown = false
 
 --== CONFIG ==--
