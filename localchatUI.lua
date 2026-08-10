@@ -4,7 +4,7 @@
 
 -- INTERNAL VARIABLES, DO NOT TOUCH
 local localchatUI = {}
-local version = "1.3"
+local version = "1.4"
 local newVersionWarningShown = false
 
 --== CONFIG ==--
@@ -21,6 +21,8 @@ local showBadges = true -- Whether to show people's badges in chat
 function localchatUI.toggleLocalchat(state)
     avatar:store("localchatUI.isLocalChatting", state)
 end
+
+------------------------------------------------------------------
 
 local trackedChatters = {}  -- uuid -> { player, lastMessage, lastSeen }
 
@@ -44,7 +46,8 @@ local function updateTrackedChatters()
             else
                 -- new potential chatter: check fishText existence
                 local fishText = p:getVariable("fishText")
-                if fishText and (uuid ~= player:getUUID() or showSelf) then
+                local playerVersion = p:getVariable("localchatUI.version")
+                if (fishText or playerVersion) and (uuid ~= player:getUUID() or showSelf) then
                     trackedChatters[uuid] = {
                         player = p,
                         lastMessage = fishText.message,
@@ -54,8 +57,7 @@ local function updateTrackedChatters()
                     -- version check against other players to alert if a new version is available
                     -- only shown once per session
                     if not newVersionWarningShown then
-                        local theirVersion = p:getVariable("localchatUI.version")
-                        if theirVersion and version < theirVersion then
+                        if playerVersion and version < playerVersion then
                             printJson(toJson({
                                 text = "Someone around you is using a newer version of Localchat UI! Your messages might be incompatible, Please update.",
                                 color = "gold"
@@ -117,7 +119,7 @@ local function exportVariables()
     avatar:store("localchatUI.version", version)
     avatar:store("localchatUI.name", nameplate.CHAT:getText() or player:getName())
     avatar:store("localchatUI.badge", avatar:getBadges())
-    avatar:store("localchatUI.isLocalChatting", defaultLocalchatEnabled)
+    avatar:store("localchatUI.isLocalChatting", player:getVariable("localchatUI.isLocalChatting") or defaultLocalchatEnabled)
     events.TICK:remove(exportVariables)
 end
 events.TICK:register(exportVariables)
