@@ -4,7 +4,7 @@
 
 -- INTERNAL VARIABLES, DO NOT TOUCH
 local localchatUI = {}
-local version = "1.4"
+local version = "1.3"
 local newVersionWarningShown = false
 
 --== CONFIG ==--
@@ -50,7 +50,7 @@ local function updateTrackedChatters()
                 if (fishText or playerVersion) and (uuid ~= player:getUUID() or showSelf) then
                     trackedChatters[uuid] = {
                         player = p,
-                        lastMessage = fishText.message,
+                        lastMessage = fishText and fishText.message or nil,
                         lastSeen = now
                     }
 
