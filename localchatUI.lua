@@ -19,7 +19,7 @@ local showBadges = true -- Whether to show people's badges in chat
 -- run this function under where you toggle your localchat
 -- if you dont do this, you will always show up in chat for other people regardless of if localchat is enabled for you
 function localchatUI.toggleLocalchat(state)
-    avatar:store("localchatUI.isLocalChatting", state)
+    pings.toggleLocalChat(state)
 end
 
 ------------------------------------------------------------------
@@ -114,6 +114,8 @@ local function tickLocalchat()
         end
     end
 end
+
+function pings.toggleLocalChat(state) avatar:store("localchatUI.isLocalChatting", state) end
 
 function pings.updateMessage(msg) -- the CHAT_SEND_MESSAGE event is host only, so we have to tell other clients to actually update the message
     avatar:store("localchatUI.message", {message = msg, sent = world.getTime()})
