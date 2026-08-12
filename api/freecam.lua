@@ -16,7 +16,7 @@ local orbitDistOffset = vectors.vec3(1.3, 0, 0) -- Where the freecam will be whe
 local updatesPerSecond = 4
 
 --== Nameplate Settings, for if you want to give your Freecam a little nameplate that also mimics the player nameplate behaviour. ==--
-local enableCamNameplate = true -- This will create a little Nameplate above for if you want your freecam to have one.
+local enableCamNameplate = false -- This will create a little Nameplate above for if you want your freecam to have one.
 local camName = "litol" --<< What the freecam's nameplate will display.
 local camName_bold = false
 local camName_color = "#D54D6A"

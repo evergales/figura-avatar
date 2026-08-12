@@ -4,7 +4,7 @@
 
 -- INTERNAL VARIABLES, DO NOT TOUCH
 local localchatUI = {}
-local version = "1.3"
+local version = "1.4"
 local newVersionWarningShown = false
 
 --== CONFIG ==--
@@ -26,6 +26,13 @@ end
 
 local trackedChatters = {}  -- uuid -> { player, lastMessage, lastSeen }
 
+local function exportVariables()
+    avatar:store("localchatUI.version", version)
+    avatar:store("localchatUI.name", nameplate.CHAT:getText())
+    avatar:store("localchatUI.badge", avatar:getBadges())
+    avatar:store("localchatUI.isLocalChatting", player:getVariable("localchatUI.isLocalChatting") or defaultLocalchatEnabled)
+end
+
 local function updateTrackedChatters()
     if world.getTime() % math.floor(20 / trackingUpdatesPerSecond) ~= 0 then return end
     local now = world.getTime()
@@ -45,13 +52,13 @@ local function updateTrackedChatters()
                 trackedChatters[uuid].lastSeen = now
             else
                 -- new potential chatter: check fishText existence
-                local fishText = p:getVariable("fishText")
                 local playerVersion = p:getVariable("localchatUI.version")
-                if (fishText or playerVersion) and (uuid ~= player:getUUID() or showSelf) then
+                if playerVersion and (uuid ~= player:getUUID() or showSelf) then
                     trackedChatters[uuid] = {
                         player = p,
-                        lastMessage = fishText and fishText.message or nil,
-                        lastSeen = now
+                        lastMessage = nil,
+                        lastSeen = now,
+                        startedTracking = now
                     }
 
                     -- version check against other players to alert if a new version is available
@@ -84,9 +91,10 @@ local function tickLocalchat()
 
     for _, data in pairs(trackedChatters) do
         local p = data.player
-        local fishText = p:getVariable("fishText")
-        local newMessage = fishText and fishText.message
-        if newMessage and data.lastMessage ~= newMessage then -- check if the player has sent a new message since our stored one
+        local newMessage = p:getVariable("localchatUI.message")
+        if newMessage -- check if the player has a message var
+        and (not data.lastMessage or data.lastMessage.sent ~= newMessage.sent) -- check if the player has sent a new message since our stored one (or whether its the first)
+        and (data.startedTracking < newMessage.sent) then -- check whether the player's last sent message was before we started tracking them
             data.lastMessage = newMessage
             local playerName = p:getVariable("localchatUI.name")
             local isLocalChatting = p:getVariable("localchatUI.isLocalChatting")
@@ -100,12 +108,28 @@ local function tickLocalchat()
                     toJson({ text = "[", color = "gray" }),
                     formattedName,
                     (showBadges and formattedBadge ~= nil) and formattedBadge or "",
-                    toJson({ text = "] "..newMessage, color = "gray"})
+                    toJson({ text = "] "..newMessage.message, color = "gray"})
                 )
             end
         end
     end
 end
+
+function pings.updateMessage(msg) -- the CHAT_SEND_MESSAGE event is host only, so we have to tell other clients to actually update the message
+    avatar:store("localchatUI.message", {message = msg, sent = world.getTime()})
+end
+
+local fishTextPresent = false
+events.CHAT_SEND_MESSAGE:register(function (msg)
+    if string.sub(msg, 1, 1) == "/" then return msg end
+
+    if player:getVariable("localchatUI.isLocalChatting") then
+        pings.updateMessage(msg)
+        return fishTextPresent and msg or nil -- if fishtext is present, allow it to hide messages instead of this script, returning nil will error in that case
+    end
+
+    return msg
+end)
 
 -- this script should only ever run on the host, syncing is done via player variables
 if host:isHost() then events.TICK:register(function()
@@ -113,23 +137,21 @@ if host:isHost() then events.TICK:register(function()
     tickLocalchat()
 end) end
 
--- wait 1 tick for the nameplate to be loaded because of entity init registration order T-T
--- and store synced variables
-local function exportVariables()
-    avatar:store("localchatUI.version", version)
-    avatar:store("localchatUI.name", nameplate.CHAT:getText() or player:getName())
-    avatar:store("localchatUI.badge", avatar:getBadges())
-    avatar:store("localchatUI.isLocalChatting", player:getVariable("localchatUI.isLocalChatting") or defaultLocalchatEnabled)
-    events.TICK:remove(exportVariables)
+local function init()
+    if not player:isLoaded() then return end -- wait until the entity is in range and then export vars
+    fishTextPresent = pcall(require, "localchat") -- test whether fishText localchat is present (has to be in the same folder)
+    exportVariables()
+    events.TICK:remove(init)
 end
-events.TICK:register(exportVariables)
+events.TICK:register(init)
 
 -- clear tracked chatter list when resource reload
+pings.reinit = exportVariables
 if host:isHost() then events.RESOURCE_RELOAD:register(function ()
     for chatter in pairs (trackedChatters) do
         trackedChatters[chatter] = nil
     end
-    exportVariables() 
+    pings.reinit()
 end) end
 
 return localchatUI
