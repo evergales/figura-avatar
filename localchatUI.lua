@@ -8,8 +8,6 @@ local version = "1.4"
 local newVersionWarningShown = false
 
 --== CONFIG ==--
-local defaultLocalchatEnabled = false -- whether localchat is enabled by default on your avatar
-local ignoreNonScriptUsers = true -- doesnt show messages for people who dont have this script installed
 local showSelf = true -- show your own messages in the localchat history
 local ticksPerSecond = 10 -- how often your client will check for new messages
 local trackingUpdatesPerSecond = 2 -- how often your client will update the list of players who are tracked in your localchat
@@ -17,7 +15,7 @@ local trackingDistance = 50 -- how far away players can be while you still see t
 local showBadges = true -- Whether to show people's badges in chat
 
 -- run this function under where you toggle your localchat
--- if you dont do this, you will always show up in chat for other people regardless of if localchat is enabled for you
+-- your localchat state is false by default, if you dont set it through this, it will stay false
 function localchatUI.toggleLocalchat(state)
     pings.toggleLocalChat(state)
 end
@@ -30,7 +28,6 @@ local function exportVariables()
     avatar:store("localchatUI.version", version)
     avatar:store("localchatUI.name", nameplate.CHAT:getText())
     avatar:store("localchatUI.badge", avatar:getBadges())
-    avatar:store("localchatUI.isLocalChatting", player:getVariable("localchatUI.isLocalChatting") or defaultLocalchatEnabled)
 end
 
 local function updateTrackedChatters()
@@ -102,7 +99,7 @@ local function tickLocalchat()
 
             local formattedName = playerName or string.format('{ text = %s, color = "gray"}', p:getName())
             local formattedBadge = badge and toJson({ text = badge, font = "figura:badges" }) or nil
-            if isLocalChatting or (isLocalChatting == nil and not ignoreNonScriptUsers) then
+            if isLocalChatting then
                 -- printJson is only visible to the host unless another player has logging for non-host enabled
                 printJson(
                     toJson({ text = "[", color = "gray" }),
