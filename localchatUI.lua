@@ -2,21 +2,37 @@
 -- integrates fishText's localchat and makes local messages show up in the UI
 -- made by: evergales
 
--- INTERNAL VARIABLES, DO NOT TOUCH
-local localchatUI = {}
-local version = "1.4"
-local newVersionWarningShown = false
-
 --== CONFIG ==--
 local showSelf = true -- show your own messages in the localchat history
+local showLocalchatIcon = true -- shows a small icon in your UI to tell if you're in localchat or not
 local ticksPerSecond = 10 -- how often your client will check for new messages
 local trackingUpdatesPerSecond = 2 -- how often your client will update the list of players who are tracked in your localchat
 local trackingDistance = 50 -- how far away players can be while you still see their localchat messsages (note: players outside your render distance wont show no matter what)
 local showBadges = true -- Whether to show people's badges in chat
 
+-- INTERNAL VARIABLES, DO NOT TOUCH
+local localchatUI = {}
+local version = "1.5"
+local newVersionWarningShown = false
+local localchatPopup = models:newPart("", "HUD"):newText("")
+local popup_width = 200
+local popupState = {
+    currentX = popup_width,
+    targetX  = popup_width,
+}
+
 -- run this function under where you toggle your localchat
 -- your localchat state is false by default, if you dont set it through this, it will stay false
 function localchatUI.toggleLocalchat(state)
+    local shouldShow = state and showLocalchatIcon
+    localchatPopup
+        :setVisible(shouldShow)
+        :setText(state and ":speech_bubble:" or "")
+        :setScale(1.2)
+        :setOutline(true)
+        :setOutlineColor(0.369, 0.584, 0.737)
+
+    popupState.targetX = shouldShow and -5 or popup_width
     pings.toggleLocalChat(state)
 end
 
@@ -83,6 +99,8 @@ local function updateTrackedChatters()
     end
 end
 
+--- @type Vector3
+local lastPos = nil
 local function tickLocalchat()
     if world.getTime() % math.floor(20 / ticksPerSecond) ~= 0 then return end
 
@@ -110,7 +128,21 @@ local function tickLocalchat()
             end
         end
     end
+
+    -- periodically refresh the local chatting state from the host
+    -- executed every 15 seconds or when the player moves a large amount of blocks in a single tick like teleporting (using the tracking distance as a base)
+    if world.getTime() % 300 == 0 or lastPos and (player:getPos().xy - lastPos.xy):length() > trackingDistance then
+        pings.toggleLocalChat(player:getVariable("localchatUI.isLocalChatting"))
+    end
+
+    lastPos = player:getPos()
 end
+
+local function updatePopupAnim()
+    popupState.currentX = popupState.currentX + (popupState.targetX - popupState.currentX) * 0.1
+    localchatPopup:setPos(popupState.currentX, -client:getScaledWindowSize().y + 27)
+end
+if host:isHost() then events.RENDER:register(updatePopupAnim) end
 
 function pings.toggleLocalChat(state) avatar:store("localchatUI.isLocalChatting", state) end
 
