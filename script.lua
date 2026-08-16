@@ -1,13 +1,10 @@
-local Util = require("util")
-local localchatUI = require("localchatUI")
-local fishText = require("fishTextAssets.fishText")
-local axoplate = require("api.axoplate")
-
 require("api.GSAnimBlend")
 local SwingingPhysics = require("api.swinging_physics")
 local patpat = require("api.patpat")
 local squapi = require("api.SquAPI")
-local placeholders = require("api.placeholders")
+local axoplate = require("api.axoplate")
+local Util = require("util")
+local localchatUI = require("localchatUI")
 local swingOnHead = SwingingPhysics.swingOnHead
 avatar:color(vec(0.72, 0.12, 0.3)) -- #B8204E
 
@@ -15,7 +12,8 @@ avatar:color(vec(0.72, 0.12, 0.3)) -- #B8204E
 vanilla_model.PLAYER:setVisible(false)
 vanilla_model.ARMOR:setVisible(false)
 vanilla_model.HELMET_ITEM:setVisible(true)
-models.assets:setVisible(false)
+-- models.assets:setVisible(false)
+Util.setClothes(config:load("clothes") or "skin")
 
 -- nameplate
 axoplate:new(models.gali.root, "nameplate", "${badges}:axolotl: Gali")
@@ -49,15 +47,7 @@ squapi.smoothHead:new(
 swingOnHead(models.gali.root.Torso.Head.LeftGills, 0, {0,0,0,0,-45,45}, nil, nil, nil)
 swingOnHead(models.gali.root.Torso.Head.RightGills, 0, {0,0,0,0,-45,45}, nil, nil, nil)
 
-local mainPage = action_wheel:newPage()
-action_wheel:setPage(mainPage)
-
-function pings.switchSkin(skin)
-    Util.ParticleCircle(1, 15, "minecraft:trial_spawner_detection_ominous")
-    models.gali:setPrimaryTexture("CUSTOM", textures[skin])
-    models.gali.root.Torso.Head.Face:setPrimaryTexture("CUSTOM", textures["expressions"])
-end
-
+-- Localchat things --
 ENABLE_DIALOGUE = true
 USE_LOCALCHAT = false
 local localchat_action = nil
@@ -74,36 +64,6 @@ function pings.localchat(state)
   USE_LOCALCHAT = state
   localchatUI.toggleLocalchat(state)
 end
-
-mainPage:newAction()
-    :title("Suit Skin")
-    :item("minecraft:netherite_chestplate")
-    :hoverColor(0.169, 0.141, 0.153)
-    :onLeftClick(function() pings.switchSkin("suit") end)
-mainPage:newAction()
-    :title("Default Skin")
-    :item("minecraft:leather_chestplate")
-    :hoverColor(0.89, 0.235, 0.412)
-    :onLeftClick(function() pings.switchSkin("skin") end)
-
-localchat_action = mainPage:newAction()
-    :title("Local Chat Disabled")
-    :toggleTitle("Local Chat Enabled")
-    :item("minecraft:blaze_rod")
-    :toggleItem("minecraft:breeze_rod")
-    :hoverColor(0.86, 1.0, 0.97)
-    :toggleColor(0.541, 1.0, 0.769)
-    :setOnToggle(pings.localchat)
-    :setToggled(USE_LOCALCHAT)
-mainPage:newAction()
-    :title("Dialogue Disabled")
-    :toggleTitle("Dialogue Enabled")
-    :texture(textures["assets.chat-bubble-disabled"], nil, nil, nil, nil, 2.5)
-    :toggleTexture(textures["assets.chat-bubble"], nil, nil, nil, nil, 2.5)
-    :hoverColor(0.86, 1.0, 0.97)
-    :toggleColor(0.541, 1.0, 0.769)
-    :setOnToggle(pings.dialogue)
-    :setToggled(ENABLE_DIALOGUE)
 
 animations.gali.patted:blendTime(2, 10)
 

@@ -27,6 +27,11 @@ function Util.getAttribute(attribute_name)
     return 1 -- default
 end
 
+function Util.setClothes(texture)
+    models.gali:setPrimaryTexture("CUSTOM", textures[texture])
+    models.gali.root.Torso.Head.Face:setPrimaryTexture("CUSTOM", textures["expressions"])
+end
+
 return Util
 
 
