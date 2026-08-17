@@ -1,11 +1,9 @@
 require("api.GSAnimBlend")
-local SwingingPhysics = require("api.swinging_physics")
 local patpat = require("api.patpat")
 local squapi = require("api.SquAPI")
 local axoplate = require("api.axoplate")
 local Util = require("util")
 local localchatUI = require("localchatUI")
-local swingOnHead = SwingingPhysics.swingOnHead
 avatar:color(vec(0.72, 0.12, 0.3)) -- #B8204E
 
 --hide models
@@ -44,8 +42,17 @@ squapi.smoothHead:new(
     nil      --(0.1) blendToConsiderStopped
 )
 
-swingOnHead(models.gali.root.Torso.Head.LeftGills, 0, {0,0,0,0,-45,45}, nil, nil, nil)
-swingOnHead(models.gali.root.Torso.Head.RightGills, 0, {0,0,0,0,-45,45}, nil, nil, nil)
+squapi.ear:new(
+    models.gali.root.Torso.Head.LeftGills, --leftEar
+    models.gali.root.Torso.Head.RightGills, --(nil) rightEar
+    0.35, --(1) rangeMultiplier
+    true, --(false) horizontalEars
+    1.3, --(2) bendStrength
+    false, --(true) doEarFlick
+    nil, --(400) earFlickChance
+    0.1, --(0.1) earStiffness
+    0.6  --(0.8) earBounce
+)
 
 -- Localchat things --
 ENABLE_DIALOGUE = true
@@ -63,6 +70,10 @@ end
 function pings.localchat(state)
   USE_LOCALCHAT = state
   localchatUI.toggleLocalchat(state)
+end
+
+function pings.togglePats(state)
+  avatar:store("patpat.noPats", state)
 end
 
 animations.gali.patted:blendTime(2, 10)

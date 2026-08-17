@@ -38,6 +38,13 @@ main:newPageRedirect()
     :setIcon("theme", vec(0, 8, 8, 8), true)
 
 main:newToggle()
+    :setText(":hand: Pats")
+    :setToggled(true)
+    :onToggle(function (toggled)
+        pings.togglePats(toggled)
+    end)
+
+main:newToggle()
     :setText(":typing: FishText")
     :setToggled(true)
     :onToggle(function (toggled, obj)
