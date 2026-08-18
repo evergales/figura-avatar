@@ -4,7 +4,22 @@ local squapi = require("api.SquAPI")
 local axoplate = require("api.axoplate")
 local Util = require("util")
 local localchatUI = require("localchatUI")
-avatar:color(vec(0.72, 0.12, 0.3)) -- #B8204E
+
+State = {}
+State.clothes = config:load("clothes") or "skin"
+State.dialogue = true
+State.localchat = false
+State.pats = false
+
+function pings.syncState(hostState)
+  if State.clothes ~= hostState.clothes then Util.setClothes(hostState.clothes) end
+  if State.pats ~= hostState.pats then avatar:store("patpat.noPats", hostState.pats) end
+  State = hostState
+end
+if host:isHost() then events.TICK:register(function ()
+  if not player:isLoaded() or world.getTime() % 300 ~= 0 then return end
+  pings.syncState(State)
+end) end
 
 --hide models
 vanilla_model.PLAYER:setVisible(false)
@@ -54,21 +69,26 @@ squapi.ear:new(
     0.6  --(0.8) earBounce
 )
 
--- Localchat things --
-ENABLE_DIALOGUE = true
-USE_LOCALCHAT = false
-local localchat_action = nil
+-- pings --
 
+function pings.switchClothes(texture)
+    if not player:isLoaded() then return end
+    Util.ParticleCircle(1, 15, "minecraft:trial_spawner_detection_ominous")
+    Util.setClothes(texture)
+end
+
+-- Localchat things --
+local localchat_action = nil
 function pings.dialogue(state)
-  ENABLE_DIALOGUE = state
-  if not ENABLE_DIALOGUE and USE_LOCALCHAT then
+  State.dialogue = state
+  if not State.dialogue and State.localchat then
     localchat_action:setToggled(false)
-    USE_LOCALCHAT = false
+    State.localchat = false
   end
 end
 
 function pings.localchat(state)
-  USE_LOCALCHAT = state
+  State.localchat = state
   localchatUI.toggleLocalchat(state)
 end
 

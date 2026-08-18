@@ -63,7 +63,7 @@ else-- If permissions are too low then change to extremely basic dialog to avoid
 end
 
 function pings.sendMessage(msg)
-    if player:isLoaded() == false or not ENABLE_DIALOGUE then return end
+    if player:isLoaded() == false or not State.dialogue then return end
     dialog:write(msg)
 end
 
@@ -109,7 +109,7 @@ if host:isHost() then
         if string.sub(msg, 1, 1) == "/" then return msg end
 
         local isPrefixed = string.sub(msg, 1, 1) == prefix
-        local useLocalchat = (isPrefixLocal and isPrefixed) or (isPrefixLocal == false and isPrefixed == false) or (USE_LOCALCHAT and ENABLE_DIALOGUE)
+        local useLocalchat = (isPrefixLocal and isPrefixed) or (isPrefixLocal == false and isPrefixed == false) or (State.localchat and State.dialogue)
         local unprefixedMsg = (isPrefixed and string.sub(msg, 2, -1)) or msg
 
         if useLocalchat then
@@ -132,7 +132,7 @@ if host:isHost() then
         end, "localchat_subtitle")
 
         events.RENDER:register(function(delta, context)
-            if context == "FIRST_PERSON" and ENABLE_DIALOGUE then
+            if context == "FIRST_PERSON" and State.dialogue then
                 subtitle:setVisible(true)
                 subtitle:render(delta)
             else

@@ -14,12 +14,6 @@ local skins = {
     { texture = "suit", display = ":mci_black_dye: Suit" },
 }
 
-function pings.switchClothes(texture)
-    if not player:isLoaded() then return end
-    Util.ParticleCircle(1, 15, "minecraft:trial_spawner_detection_ominous")
-    Util.setClothes(texture)
-end
-
 local clothesPage = panels.newPage("Clothes")
 for _, skin in ipairs(skins) do
     local toggle = clothesPage:newText()
