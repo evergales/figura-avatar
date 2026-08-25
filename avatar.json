@@ -4,5 +4,14 @@
   "authors": [
     "evergales"
   ],
-  "color": "#B8204E"
+  "color": "#B8204E",
+  "customizations": {
+    "models.gali.root.Torso.Head.HeadOutline" : {"primaryRenderType": "TRANSLUCENT_CULL"},
+    "models.gali.root.Torso.Head.LeftGills.LeftGillsShadow" : {"primaryRenderType": "TRANSLUCENT_CULL"},
+    "models.gali.root.Torso.Head.RightGills.RightGillsShadow" : {"primaryRenderType": "TRANSLUCENT_CULL"},
+    "models.gali.root.Torso.Head.Fluff.FluffShadow" : {"primaryRenderType": "TRANSLUCENT_CULL"},
+
+    "models.newsboycap.Newsboy": { "moveTo": "models.gali.root.Torso.Head" },
+    "models.newsboycap.Newsboy.HatOutline": { "primaryRenderType": "TRANSLUCENT_CULL" }
+  }
 }

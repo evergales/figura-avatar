@@ -26,9 +26,26 @@ end
 
 clothesPage:newReturnButton()
 
+local accessoriesPage = panels.newPage("Accessories")
+accessoriesPage:newToggle()
+    :setText(":hat_kid: Newsboy cap")
+    :setToggled(config:load("accessories.newsboy") or false)
+    :onToggle(function (toggled)
+        pings.toggleAcessory("newsboycap", toggled)
+        config:save("accessories.newsboy", toggled)
+        State.accessories.newsboy = toggled
+    end)
+
+accessoriesPage:newReturnButton()
+
 main:newPageRedirect()
     :setText("Clothes")
     :setPage(clothesPage)
+    :setIcon("theme", vec(0, 8, 8, 8), true)
+
+main:newPageRedirect()
+    :setText("Accessories")
+    :setPage(accessoriesPage)
     :setIcon("theme", vec(0, 8, 8, 8), true)
 
 main:newToggle()

@@ -204,7 +204,7 @@ function customDialog:onLetterInit(letter, letterIndex, wordIndex, totalIndex, l
     if not self.muted and player:isLoaded() and letter.string ~= " " then
         local sound = defaultDialogAudio
         local snd = sounds[sound]
-            :setSubtitle(player:getName().." speaks")
+            :setSubtitle(nameplate.CHAT:getText().." speaks")
             :setPitch(dialogPitch + (math.random()-0.5)*2 * dialogPitchVariation)
             :setVolume(dialogVolume)
             :setPos(player:getPos())

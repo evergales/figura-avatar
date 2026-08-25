@@ -28,8 +28,11 @@ function Util.getAttribute(attribute_name)
 end
 
 function Util.setClothes(texture)
-    models.gali:setPrimaryTexture("CUSTOM", textures[texture])
-    models.gali.root.Torso.Head.Face:setPrimaryTexture("CUSTOM", textures["expressions"])
+    models.gali.root.LeftLeg:setPrimaryTexture("CUSTOM", textures[texture])
+    models.gali.root.RightLeg:setPrimaryTexture("CUSTOM", textures[texture])
+    models.gali.root.Torso.LeftArm:setPrimaryTexture("CUSTOM", textures[texture])
+    models.gali.root.Torso.RightArm:setPrimaryTexture("CUSTOM", textures[texture])
+    models.gali.root.Torso.Body:setPrimaryTexture("CUSTOM", textures[texture])
 end
 
 return Util
