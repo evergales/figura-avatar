@@ -1,5 +1,10 @@
 local Util = {}
 
+function Util.Highperms()
+    local permLevel = avatar:getPermissionLevel()
+    return permLevel == "HIGH" or permLevel == "MAX"
+end
+
 function Util.ParticleCircle(radius, count, particle)
     local pos = player:getPos()
 

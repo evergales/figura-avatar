@@ -6,33 +6,27 @@
 local showSelf = true -- show your own messages in the localchat history
 local showLocalchatIcon = true -- shows a small icon in your UI to tell if you're in localchat or not
 local ticksPerSecond = 10 -- how often your client will check for new messages
-local trackingUpdatesPerSecond = 2 -- how often your client will update the list of players who are tracked in your localchat
-local trackingDistance = 50 -- how far away players can be while you still see their localchat messsages (note: players outside your render distance wont show no matter what)
+local trackingUpdatesPerSecond = 1 -- how often your client will update the list of players who are tracked in your localchat
+local trackingDistance = 64 -- how far away players can be while you still see their localchat messsages (note: players outside your render distance wont show no matter what)
 local showBadges = true -- Whether to show people's badges in chat
 
 -- INTERNAL VARIABLES, DO NOT TOUCH
 local localchatUI = {}
-local version = "1.5"
+local version = "1.6"
 local newVersionWarningShown = false
 local localchatPopup = models:newPart("", "HUD"):newText("")
-local popup_width = 200
-local popupState = {
-    currentX = popup_width,
-    targetX  = popup_width,
-}
+    :setVisible(false)
+    :setText(":speech_bubble:")
+    :setScale(1.2)
+    :setPos(-5, -client:getScaledWindowSize().y + 27)
+    :setOutline(true)
+    :setOutlineColor(0.37, 0.58, 0.74)
 
 -- run this function under where you toggle your localchat
 -- your localchat state is false by default, if you dont set it through this, it will stay false
 function localchatUI.toggleLocalchat(state)
     local shouldShow = state and showLocalchatIcon
-    localchatPopup
-        :setVisible(shouldShow)
-        :setText(state and ":speech_bubble:" or "")
-        :setScale(1.2)
-        :setOutline(true)
-        :setOutlineColor(0.369, 0.584, 0.737)
-
-    popupState.targetX = shouldShow and -5 or popup_width
+    localchatPopup:setVisible(shouldShow)
     pings.toggleLocalChat(state)
 end
 
@@ -42,13 +36,13 @@ local trackedChatters = {}  -- uuid -> { player, lastMessage, lastSeen }
 
 local function exportVariables()
     avatar:store("localchatUI.version", version)
-    avatar:store("localchatUI.name", nameplate.CHAT:getText())
+    avatar:store("localchatUI.name", nameplate.CHAT:getText() or player:getName())
     avatar:store("localchatUI.badge", avatar:getBadges())
+    avatar:store("localchatUI.color", avatar:getColor())
 end
 
-local function updateTrackedChatters()
-    if world.getTime() % math.floor(20 / trackingUpdatesPerSecond) ~= 0 then return end
-    local now = world.getTime()
+local function updateTrackedChatters(now)
+    if now % math.floor(20 / trackingUpdatesPerSecond) ~= 0 then return end
     local nearby = {}
 
     -- scan nearby players
@@ -69,6 +63,9 @@ local function updateTrackedChatters()
                 if playerVersion and (uuid ~= player:getUUID() or showSelf) then
                     trackedChatters[uuid] = {
                         player = p,
+                        name = p:getVariable("localchatUI.name"),
+                        badge = p:getVariable("localchatUI.badge"),
+                        color = p:getVariable("localchatUI.color"),
                         lastMessage = nil,
                         lastSeen = now,
                         startedTracking = now
@@ -90,8 +87,8 @@ local function updateTrackedChatters()
         end
     end -- dont even
 
-    -- remove chatters if they leave range or disappear after a 5 second grace period
-    local timeout = 5 * 20  -- 5 seconds in ticks
+    -- remove chatters if they leave range or disappear after a 10 second grace period
+    local timeout = 10 * 20  -- 10 seconds in ticks
     for uuid, data in pairs(trackedChatters) do
         if not nearby[uuid] and (now - data.lastSeen) > timeout then
             trackedChatters[uuid] = nil
@@ -101,8 +98,8 @@ end
 
 --- @type Vector3
 local lastPos = nil
-local function tickLocalchat()
-    if world.getTime() % math.floor(20 / ticksPerSecond) ~= 0 then return end
+local function tickLocalchat(now)
+    if now % math.floor(20 / ticksPerSecond) ~= 0 then return end
 
     for _, data in pairs(trackedChatters) do
         local p = data.player
@@ -111,19 +108,15 @@ local function tickLocalchat()
         and (not data.lastMessage or data.lastMessage.sent ~= newMessage.sent) -- check if the player has sent a new message since our stored one (or whether its the first)
         and (data.startedTracking < newMessage.sent) then -- check whether the player's last sent message was before we started tracking them
             data.lastMessage = newMessage
-            local playerName = p:getVariable("localchatUI.name")
-            local isLocalChatting = p:getVariable("localchatUI.isLocalChatting")
-            local badge = p:getVariable("localchatUI.badge")
-
-            local formattedName = playerName or string.format('{ text = %s, color = "gray"}', p:getName())
-            local formattedBadge = badge and toJson({ text = badge, font = "figura:badges" }) or nil
-            if isLocalChatting then
+            local formattedBadge = data.badge and toJson({ text = data.badge, font = "figura:badges", color = data.badge == "△" and data.color or nil }) or nil
+            if p:getVariable("localchatUI.isLocalChatting") then
                 -- printJson is only visible to the host unless another player has logging for non-host enabled
                 printJson(
                     toJson({ text = "[", color = "gray" }),
-                    formattedName,
-                    (showBadges and formattedBadge ~= nil) and formattedBadge or "",
-                    toJson({ text = "] "..newMessage.message, color = "gray"})
+                    data.name,
+                    showBadges and formattedBadge or "",
+                    toJson({ text = "] "..newMessage.message, color = "gray"}),
+                    "\n"
                 )
             end
         end
@@ -131,18 +124,12 @@ local function tickLocalchat()
 
     -- periodically refresh the local chatting state from the host
     -- executed every 15 seconds or when the player moves a large amount of blocks in a single tick like teleporting (using the tracking distance as a base)
-    if world.getTime() % 300 == 0 or lastPos and (player:getPos().xy - lastPos.xy):length() > trackingDistance then
+    if now % 300 == 0 or lastPos and (player:getPos().xy - lastPos.xy):length() > trackingDistance then
         pings.toggleLocalChat(player:getVariable("localchatUI.isLocalChatting"))
     end
 
     lastPos = player:getPos()
 end
-
-local function updatePopupAnim()
-    popupState.currentX = popupState.currentX + (popupState.targetX - popupState.currentX) * 0.1
-    localchatPopup:setPos(popupState.currentX, -client:getScaledWindowSize().y + 27)
-end
-if host:isHost() then events.RENDER:register(updatePopupAnim) end
 
 function pings.toggleLocalChat(state) avatar:store("localchatUI.isLocalChatting", state) end
 
@@ -152,7 +139,7 @@ end
 
 local fishTextPresent = false
 events.CHAT_SEND_MESSAGE:register(function (msg)
-    if string.sub(msg, 1, 1) == "/" then return msg end
+    if string.sub(msg, 1, 1) == "/" then return msg end -- ignore / commands
 
     if player:getVariable("localchatUI.isLocalChatting") then
         pings.updateMessage(msg)
@@ -164,8 +151,9 @@ end)
 
 -- this script should only ever run on the host, syncing is done via player variables
 if host:isHost() then events.TICK:register(function()
-    updateTrackedChatters()
-    tickLocalchat()
+    local now = world.getTime()
+    updateTrackedChatters(now)
+    tickLocalchat(now)
 end) end
 
 local function init()
@@ -175,14 +163,5 @@ local function init()
     events.TICK:remove(init)
 end
 events.TICK:register(init)
-
--- clear tracked chatter list when resource reload
-pings.reinit = exportVariables
-if host:isHost() then events.RESOURCE_RELOAD:register(function ()
-    for chatter in pairs (trackedChatters) do
-        trackedChatters[chatter] = nil
-    end
-    pings.reinit()
-end) end
 
 return localchatUI

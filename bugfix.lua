@@ -1,3 +1,5 @@
+local Util = require "util"
+
 -- neoforge action wheel title tooltip bug fix from figura discord by: manuel_2867
 -- modified by evergales to look nicer
 --[[ if host:isHost() then
@@ -41,7 +43,7 @@
 end ]]
 
 -- stupidass create wonky cam fix
-if host:isHost() then
+if host:isHost() or not Util.Highperms() then
   events.WORLD_RENDER:register(function(delta)
     -- checks for freecam
     -- checks if we're specifically sitting on a create seat

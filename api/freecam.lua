@@ -45,7 +45,6 @@ local camNamePlate = nil
 local freecamPos, freecamRot = vectors.vec3(0, 0, 0), vectors.vec2(0, 0)
 local freecamPos_final, freecamRot_final = vectors.vec3(0, 0, 0),
     vectors.vec2(0, 0) -- Yes I know these could both just be vec, this is just for future-proofing.
-local enoughPerms = avatar:getPermissionLevel() == "HIGH" or avatar:getPermissionLevel() == "MAX"
 local playerLoaded = false
 
 
@@ -247,27 +246,22 @@ end
 --== World Render Event, may not run on Default Permissions. ==--
 --=======================================================================--
 function events.world_render()
-  if playerLoaded then
+  if playerLoaded and camIsFree then
     -- Freecam lerp position --
-    if camIsFree then
-      freecamPos_final = math.lerp(freecamPos_final, freecamPos * 16, delay)
-      freecamRot_final = math.lerpAngle(freecamRot_final, freecamRot, delay)
-      playerFreeCam:pos(freecamPos_final):rot(freecamRot_final.xy_)
-    end
-  
-    -- patting physics
-    -- this avatar singlehandedly makes world render instructions get up to 63/64 on default when running, and the patting goes over the limit
-    -- so just disable the pat animation if we dont have perms for it
-    if enoughPerms and enablePatting then
-      -- stiffness = 0.35
-      -- damping = 0.7
-      patVelocity = (patVelocity + (targetpatScale - currentpatScale) * 0.35) * 0.7
-      currentpatScale = currentpatScale + patVelocity
-  
-      pattingPart:scale(currentpatScale)
-    end 
+    freecamPos_final = math.lerp(freecamPos_final, freecamPos * 16, delay)
+    freecamRot_final = math.lerpAngle(freecamRot_final, freecamRot, delay)
+    playerFreeCam:pos(freecamPos_final):rot(freecamRot_final.xy_)
   end
 end
+
+if enablePatting then events.RENDER:register(function ()
+  -- stiffness = 0.35
+  -- damping = 0.7
+  patVelocity = (patVelocity + (targetpatScale - currentpatScale) * 0.35) * 0.7
+  currentpatScale = currentpatScale + patVelocity
+
+  pattingPart:scale(currentpatScale)
+end) end
 
 --=======================================================================--
 

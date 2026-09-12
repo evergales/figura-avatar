@@ -34,13 +34,13 @@ Util.setClothes(config:load("clothes") or "skin")
 models.gali.root.Torso.Head.Newsboy:setVisible(config:load("accessories.newsboy") or false)
 
 -- nameplate
+nameplate.All:setText(toJson({"Gali", {text = "${afk}", color = "gray"}}))
+nameplate.CHAT:setText("Gali")
+
 axoplate:new(models.gali.root, "nameplate", "${badges}:axolotl: Gali")
 axoplate:new(models.gali.root, "afkPlate", toJson({ text = "${afk}", color = "#703aa6"}), nil, vec(0, 3, 0), 0.3)
 
 events.ENTITY_INIT:register(function ()
-  nameplate.All:setText(toJson({"Gali", {text = "${afk}", color = "gray"}}))
-  nameplate.CHAT:setText("Gali")
-
   -- this has to be under entity init because the reference can only be accessed after entity init
   ActiveNameplate = axoplate.enoughPerms and axoplate.plates.nameplate.ref or nameplate.ENTITY
 end)
