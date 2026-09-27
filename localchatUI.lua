@@ -139,7 +139,7 @@ end
 
 local fishTextPresent = false
 events.CHAT_SEND_MESSAGE:register(function (msg)
-    if string.sub(msg, 1, 1) == "/" then return msg end -- ignore / commands
+    if not msg or msg == "" or string.sub(msg, 1, 1) == "/" then return msg end -- ignore / commands
 
     if player:getVariable("localchatUI.isLocalChatting") then
         pings.updateMessage(msg)
