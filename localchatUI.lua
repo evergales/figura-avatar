@@ -12,7 +12,7 @@ local showBadges = true -- Whether to show people's badges in chat
 
 -- INTERNAL VARIABLES, DO NOT TOUCH
 local localchatUI = {}
-local version = "1.6"
+local version = "1.7"
 local newVersionWarningShown = false
 local localchatPopup = models:newPart("", "HUD"):newText("")
     :setVisible(false)
@@ -150,8 +150,12 @@ events.CHAT_SEND_MESSAGE:register(function (msg)
 end)
 
 -- this script should only ever run on the host, syncing is done via player variables
+local lastTick
 if host:isHost() then events.TICK:register(function()
     local now = world.getTime()
+    if now == lastTick then return end
+    lastTick = now
+
     updateTrackedChatters(now)
     tickLocalchat(now)
 end) end
