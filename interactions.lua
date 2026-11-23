@@ -1,8 +1,11 @@
 local Util = require "util"
 if not Util.Highperms() then return end
 
+local lastTick
 events.TICK:register(function ()
-    if not player:isLoaded() or world.getTime() % 10 ~= 0 then return end
+    local thisTick = world.getTime()
+    if not player:isLoaded() or thisTick % 10 ~= 0 or thisTick == lastTick then return end
+    lastTick = thisTick
 
     local pos = player:getPos() + vec(0, player:getEyeHeight(), 0);
     local rot = math.rad(player:getRot().y)

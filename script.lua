@@ -20,8 +20,13 @@ function pings.syncState(hostState)
 
   State = hostState
 end
+
+local lastTick
 if host:isHost() then events.TICK:register(function ()
-  if not player:isLoaded() or world.getTime() % 200 ~= 0 then return end
+  local thisTick = world.getTime()
+  if not player:isLoaded() or thisTick % 200 ~= 0 or thisTick == lastTick then return end
+  lastTick = thisTick
+  
   pings.syncState(State)
 end) end
 
